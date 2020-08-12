@@ -1,7 +1,7 @@
 import './App.css';
 import React, { useState, useCallback, useEffect } from 'react';
 
-const TODO_URL = 'http://localhost:8000/api/todos/'
+const TODO_URL = 'http://ec2-54-90-206-133.compute-1.amazonaws.com:8000/api/todos/'
 
 const App = () => {
   const [newTodo, setNewTodo] = useState('');
