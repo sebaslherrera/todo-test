@@ -1,24 +1,108 @@
-import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import React, { useState, useCallback, useEffect } from 'react';
 
-function App() {
+const TODO_URL = 'http://localhost:8000/api/todos/'
+
+const App = () => {
+  const [newTodo, setNewTodo] = useState('');
+  const [todos, setTodos] = useState([]);
+  const onNewTodoChange = useCallback((event) => {
+    setNewTodo(event.target.value)
+  }, []);
+  const formSubmited = useCallback((event) => {
+    event.preventDefault();
+    if (!newTodo.trim()) return;
+
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: newTodo })
+    };
+
+    fetch(TODO_URL, requestOptions)
+        .then(response => response.json())
+        .then((result) => {
+          setTodos([
+            ...todos,
+            {
+              id: result.id,
+              content: result.content,
+              done: result.done,
+            },
+          ]);
+        });
+    setNewTodo(''); // restart input field
+  }, [newTodo, todos]);
+
+  const addTodo = useCallback((todo, index) => (event) => {
+    const requestOptions = {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ done: !todo.done, content: todo.content })
+    };
+
+    fetch(`${TODO_URL}${todo.id}/`, requestOptions)
+        .then(response => response.json())
+        .then((result) => {
+          const newTodos = todos.slice();
+          newTodos.splice(index, 1, {
+            ...todo,
+            done: result.done
+          });
+          setTodos(newTodos)
+        });    
+  }, [todos])
+
+  const removeTodo = useCallback((todo) => (event) => {    
+    const requestOptions = {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    }
+    fetch(`${TODO_URL}${todo.id}/`, requestOptions)
+        .then(response => {
+          setTodos(todos.filter(otherTodo => otherTodo !== todo));
+        })
+    
+  }, [todos])
+
+
+  const fetchTodos = () => {
+    fetch(TODO_URL).then(res => res.json())
+      .then((result) => {
+        setTodos(result)        
+      }, (error) => {})
+  }
+
+  useEffect(() => {
+    fetchTodos()
+  }, [newTodo]);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <form onSubmit={formSubmited}>
+        <label htmlFor="newTodo">Enter a To-Do:</label>
+        <input
+          id="newTodo"
+          type="text"
+          value={newTodo}
+          autoFocus
+          onChange={onNewTodoChange} />
+        <button>Add Todo</button>
+      </form>
+      {/* <button onClick={markAllDone}>Mark all done</button> */}
+      <ul>
+        {todos.map((todo, index) => {
+          return <li key={todo.id}>
+            <input
+              value={todo.done}
+              type="checkbox"
+              checked={todo.done}
+              onChange={addTodo(todo, index)}
+            />
+            <span className={todo.done ? 'done' : ''}>{todo.content}</span>
+            <button onClick={removeTodo(todo)}>Remove Todo</button>
+          </li>
+        })}
+      </ul>
     </div>
   );
 }
