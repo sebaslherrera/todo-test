@@ -1,6 +1,8 @@
 Django==2.2.15
 django-cors-headers==3.4.0
+django-mysql==3.8.1
 djangorestframework==3.11.1
+mysqlclient==2.0.1
 psycopg2-binary==2.8.5
 pytz==2020.1
 sqlparse==0.3.1
