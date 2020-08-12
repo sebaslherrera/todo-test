@@ -5,6 +5,7 @@ const TODO_URL = 'http://localhost:8000/api/todos/'
 
 const App = () => {
   const [newTodo, setNewTodo] = useState('');
+  const [updateTodo, setUpdateTodo] = useState('');
   const [todos, setTodos] = useState([]);
   const onNewTodoChange = useCallback((event) => {
     setNewTodo(event.target.value)
@@ -47,11 +48,37 @@ const App = () => {
           const newTodos = todos.slice();
           newTodos.splice(index, 1, {
             ...todo,
-            done: result.done
+            done: result.done,
+            content: result.content
           });
           setTodos(newTodos)
-        });    
+        });
+    setUpdateTodo('')
   }, [todos])
+
+  const updateTodoContent = useCallback((todo, index, update) => (event) => {
+    const requestOptions = {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ done: todo.done, content: update })
+    };
+
+    fetch(`${TODO_URL}${todo.id}/`, requestOptions)
+        .then(response => response.json())
+        .then((result) => {
+          const newTodos = todos.slice();
+          newTodos.splice(index, 1, {
+            ...todo,
+            done: result.done,
+            content: result.content
+          });
+          setTodos(newTodos)
+        });
+  }, [todos])
+
+  const onUpdateTodo = (e) => {
+    setUpdateTodo(e.target.value)
+  }
 
   const removeTodo = useCallback((todo) => (event) => {    
     const requestOptions = {
@@ -99,7 +126,9 @@ const App = () => {
               onChange={addTodo(todo, index)}
             />
             <span className={todo.done ? 'done' : ''}>{todo.content}</span>
+            <input className={todo.done ? 'done' : ''} onChange={onUpdateTodo} value={updateTodo}/>
             <button onClick={removeTodo(todo)}>Remove Todo</button>
+            <button onClick={updateTodoContent(todo, index, updateTodo)}>Update Todo</button>
           </li>
         })}
       </ul>
